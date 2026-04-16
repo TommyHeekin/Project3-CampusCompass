@@ -11,15 +11,20 @@ int main() {
     // ingest CSV data
     compass.ParseCSV("data/edges.csv", "data/classes.csv");
 
-    // the below is example code for parsing commandline input
-    int no_of_lines;
-    string command;
-    cin >> no_of_lines;
-    cin.ignore(); // ignore newline that first cin left over
-    for (int i = 0; i < no_of_lines; i++) {
-        getline(cin, command);
+    string input;
+    smatch match;
 
-        // parse your commands however you see fit
-        compass.ParseCommand(command);
+    int count = 0;
+    while (count == 0) {
+        getline(cin, input);
+        count = compass.ParseNumInputs(input);
     }
+
+    for (int i = 0; i < count; i++) {
+        getline(cin, input);
+        if (compass.ParseCommand(input)) {
+            cout << "successful" << endl;
+        } else cout << "unsuccessful" << endl;
+    }
+    return 0;
 }

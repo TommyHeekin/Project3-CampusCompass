@@ -16,7 +16,8 @@ public:
     // Think about what helper functions you will need in the algorithm
     CampusCompass(); // constructor
     bool ParseCSV(const string &edges_filepath, const string &classes_filepath);
-    bool ParseCommand(const string &input, smatch &match, const regex &command);
+    int ParseNumInputs(const string& input);
+    bool ParseCommand(const string &input);
     bool insert(const string &student_name, int student_id, int residence_location_id, int N, vector<string> classcodes);
     bool remove(int student_id);
     bool dropClass(int student_id, string classcode);

@@ -9,43 +9,32 @@ using namespace std;
 
 //Test 5 different incorrect commands
 TEST_CASE("Incorrect Command Test", "[regex_test]") {
-  smatch match;
-  regex insertCommand = regex("(^insert\\s)\"([A-Za-z ]+)\"\\s([0-9]{8})\\s([0-9]+)\\s([0-9]+)\\s(.*)");
-  regex removeCommand = regex("(^remove\\s)([0-9]{8})$");
-  regex dropClassCommand = regex("(^dropClass\\s)([0-9]{8})\\s([A-Z]{3})([0-9]{4})$");
-  regex replaceClassCommand = regex("(^replaceClass\\s)([0-9]{8})\\s([A-Z]{3})([0-9]{4})\\s([A-Z]{3})([0-9]{4})$");
-  regex removeClassCommand = regex("(^removeClass\\s)([A-Z]{3})([0-9]{4})$");
-  regex toggleClosureCommand = regex("(^toggleEdgesClosure\\s)([0-9])\\s(.*)");
-  regex checkStatusCommand = regex("(^checkEdgeStatus\\s)([0-9]+)\\s([0-9]+)$");
-  regex isConnectedCommand = regex("(^isConnected\\s)([0-9]+)\\s([0-9]+)$");
-  regex printShortestCommand = regex("(^printShortestEdges\\s)([0-9]+)$");
-  regex printStudentCommand = regex("(^printStudentZone\\s)([0-9]+)$");
 
   CampusCompass compass;
 
   SECTION("Incorrect Name") {
     string input = "insert \"A11y\" 45679999 1 1 COP3530";
-    REQUIRE(compass.ParseCommand(input, match, insertCommand) == false);
+    REQUIRE(compass.ParseCommand(input) == false);
   }
 
   SECTION("Incorrect UFID") {
     string input = "insert \"Thomas Heekin\" 32 1 1 COP3530";
-    REQUIRE(compass.ParseCommand(input, match, insertCommand) == false);
+    REQUIRE(compass.ParseCommand(input) == false);
   }
 
   SECTION("Incorrect Location ID") {
     string input = "insert \"Thomas Heekin\" 45679999 A 1 COP3530";
-    REQUIRE(compass.ParseCommand(input, match, insertCommand) == false);
+    REQUIRE(compass.ParseCommand(input) == false);
   }
 
   SECTION("Incorrect Class Code") {
     string input = "removeClass 3530COP";
-    REQUIRE(compass.ParseCommand(input, match, removeClassCommand) == false);
+    REQUIRE(compass.ParseCommand(input) == false);
   }
 
   SECTION("Not enough parameters") {
     string input = "isConnected 23";
-    REQUIRE(compass.ParseCommand(input, match, isConnectedCommand) == false);
+    REQUIRE(compass.ParseCommand(input) == false);
   }
 }
 // Test edge case in removeStudent function

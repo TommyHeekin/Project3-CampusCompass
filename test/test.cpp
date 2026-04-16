@@ -1,84 +1,98 @@
 #include <catch2/catch_test_macros.hpp>
 #include <iostream>
+#include <regex>
 
 // change if you choose to use a different header name
 #include "CampusCompass.h"
 
 using namespace std;
 
-// the syntax for defining a test is below. It is important for the name to be
-// unique, but you can group multiple tests with [tags]. A test can have
-// [multiple][tags] using that syntax.
-TEST_CASE("Example Test Name - Change me!", "[tag]") {
-  // instantiate any class members that you need to test here
-  int one = 1;
+//Test 5 different incorrect commands
+TEST_CASE("Incorrect Command Test", "[regex_test]") {
+  smatch match;
+  regex insertCommand = regex("(^insert\\s)\"([A-Za-z ]+)\"\\s([0-9]{8})\\s([0-9]+)\\s([0-9]+)\\s(.*)");
+  regex removeCommand = regex("(^remove\\s)([0-9]{8})$");
+  regex dropClassCommand = regex("(^dropClass\\s)([0-9]{8})\\s([A-Z]{3})([0-9]{4})$");
+  regex replaceClassCommand = regex("(^replaceClass\\s)([0-9]{8})\\s([A-Z]{3})([0-9]{4})\\s([A-Z]{3})([0-9]{4})$");
+  regex removeClassCommand = regex("(^removeClass\\s)([A-Z]{3})([0-9]{4})$");
+  regex toggleClosureCommand = regex("(^toggleEdgesClosure\\s)([0-9])\\s(.*)");
+  regex checkStatusCommand = regex("(^checkEdgeStatus\\s)([0-9]+)\\s([0-9]+)$");
+  regex isConnectedCommand = regex("(^isConnected\\s)([0-9]+)\\s([0-9]+)$");
+  regex printShortestCommand = regex("(^printShortestEdges\\s)([0-9]+)$");
+  regex printStudentCommand = regex("(^printStudentZone\\s)([0-9]+)$");
 
-  // anything that evaluates to false in a REQUIRE block will result in a
-  // failing test
-  REQUIRE(one == 0); // fix me!
+  CampusCompass compass;
 
-  // all REQUIRE blocks must evaluate to true for the whole test to pass
-  REQUIRE(false); // also fix me!
+  SECTION("Incorrect Name") {
+    string input = "insert \"A11y\" 45679999 1 1 COP3530";
+    REQUIRE(compass.ParseCommand(input, match, insertCommand) == false);
+  }
+
+  SECTION("Incorrect UFID") {
+    string input = "insert \"Thomas Heekin\" 32 1 1 COP3530";
+    REQUIRE(compass.ParseCommand(input, match, insertCommand) == false);
+  }
+
+  SECTION("Incorrect Location ID") {
+    string input = "insert \"Thomas Heekin\" 45679999 A 1 COP3530";
+    REQUIRE(compass.ParseCommand(input, match, insertCommand) == false);
+  }
+
+  SECTION("Incorrect Class Code") {
+    string input = "removeClass 3530COP";
+    REQUIRE(compass.ParseCommand(input, match, removeClassCommand) == false);
+  }
+
+  SECTION("Not enough parameters") {
+    string input = "isConnected 23";
+    REQUIRE(compass.ParseCommand(input, match, isConnectedCommand) == false);
+  }
+}
+// Test edge case in removeStudent function
+TEST_CASE("Removing Student That Doesn't Exist", "[edge_case]") {
+  CampusCompass compass;
+  compass.insert("Thomas Heekin", 29824140, 33, 1, {"COP3530"});
+  REQUIRE(compass.remove(45679999) == false);
+}
+// Test edge cases in dropClass function
+TEST_CASE("Drop Class edge cases", "[edge_case]") {
+  CampusCompass compass;
+  compass.insert("Thomas Heekin", 29824140, 33, 1, {"COP3530"});
+  REQUIRE(compass.dropClass(29824140, "CDA3101") == false);
+  REQUIRE(compass.dropClass(29824140, "COP3530") == true);
+  REQUIRE(compass.dropClass(29824140, "COP3530") == false);
+}
+// Test edge cases in replaceClass function
+TEST_CASE("Replace Class edge cases", "[edge_case]") {
+  CampusCompass compass;
+  compass.insert("Thomas Heekin", 29824140, 33, 1, {"COP3530", "CDA3101"});
+  REQUIRE(compass.replaceClass(45679999, "COP3530", "MAC2312") == false);
+  REQUIRE(compass.replaceClass(29824140, "PHY2049", "MAC2312") == false);
+  REQUIRE(compass.replaceClass(29824140, "COP3530", "CDA3101") == false);
+  REQUIRE(compass.replaceClass(29824140, "COP3530", "MAC2312") == true);
+}
+// Test edge cases in removeClass function
+TEST_CASE("Remove Class edge cases", "[edge_cases]") {
+  CampusCompass compass;
+  compass.insert("Thomas Heekin", 29824140, 33, 1, {"COP3530"});
+  REQUIRE(compass.removeClass("CDA3101") == false);
+  REQUIRE(compass.removeClass("COP3530") == true);
+  REQUIRE(compass.remove(29824140) == false);
 }
 
-TEST_CASE("Test 2", "[tag]") {
-  // you can also use "sections" to share setup code between tests, for example:
-  int one = 1;
-
-  SECTION("num is 2") {
-    int num = one + 1;
-    REQUIRE(num == 2);
-  };
-
-  SECTION("num is 3") {
-    int num = one + 2;
-    REQUIRE(num == 3);
-  };
-
-  // each section runs the setup code independently to ensure that they don't
-  // affect each other
+// Test dropClass, removeClass, remove, and replaceClass commands
+TEST_CASE("Drop Class Function", "[command_test]") {
+  CampusCompass compass;
+  compass.insert("Thomas Heekin", 29824140, 33, 2, {"COP3530", "CDA3101"});
+  REQUIRE(compass.replaceClass(29824140, "CDA3101", "MAC2312") == true);
+  REQUIRE(compass.removeClass("MAC2312") == true);
+  REQUIRE(compass.dropClass(29824140, "COP3530") == true);
+  compass.insert("Thomas Heekin", 29824140, 33, 2, {"COP3530", "CDA3101"});
+  REQUIRE(compass.remove(29824140) == true);
 }
 
-// Refer to Canvas for a list of required tests. 
-// We encourage you to write more than required to ensure proper functionality, but only the ones on Canvas will be graded.
-
-// See the following for an example of how to easily test your output.
-// Note that while this works, I recommend also creating plenty of unit tests for particular functions within your code.
-// This pattern should only be used for final, end-to-end testing.
-
-// This uses C++ "raw strings" and assumes your CampusCompass outputs a string with
-//   the same thing you print.
-TEST_CASE("Example CampusCompass Output Test", "[flag]") {
-  // the following is a "raw string" - you can write the exact input (without
-  //   any indentation!) and it should work as expected
-  // this is based on the input and output of the first public test case
-  string input = R"(6
-insert "Student A" 10000001 1 1 COP3502
-insert "Student B" 10000002 1 1 COP3502
-insert "Student C" 10000003 1 2 COP3502 MAC2311
-dropClass 10000001 COP3502
-remove 10000001
-removeClass COP3502
-)";
-
-  string expectedOutput = R"(successful
-successful
-successful
-successful
-unsuccessful
-2
-)";
-
-  string actualOutput;
-
-  // somehow pass your input into your CampusCompass and parse it to call the
-  // correct functions, for example:
-  /*
-  CampusCompass c;
-  c.parseInput(input)
-  // this would be some function that sends the output from your class into a string for use in testing
-  actualOutput = c.getStringRepresentation()
-  */
-
-  REQUIRE(actualOutput == expectedOutput);
+TEST_CASE("Print Edges Test", "[edge_case]") {
+  CampusCompass compass;
+  compass.insert("Thomas Heekin", 29824140, 4, 1, {"PHY2048"});
+  //Still need to work on this one
 }

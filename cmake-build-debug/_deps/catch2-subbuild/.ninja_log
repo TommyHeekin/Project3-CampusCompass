@@ -1,0 +1,21 @@
+# ninja log v6
+0	17	1776270014066857716	catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-mkdir	834e4b68a47cd4af
+0	17	1776270014066857716	/Users/heekin/CLionProjects/Project3-CampusCompass/cmake-build-debug/_deps/catch2-subbuild/catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-mkdir	834e4b68a47cd4af
+17	10016	1776270024066183702	catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-download	500e8e95004f63f9
+17	10016	1776270024066183702	/Users/heekin/CLionProjects/Project3-CampusCompass/cmake-build-debug/_deps/catch2-subbuild/catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-download	500e8e95004f63f9
+10017	10074	1776270024067101876	catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-update	1af515e1aec7abf1
+10017	10074	1776270024067101876	/Users/heekin/CLionProjects/Project3-CampusCompass/cmake-build-debug/_deps/catch2-subbuild/catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-update	1af515e1aec7abf1
+10074	10090	1776270024139509330	catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-patch	8ba0d74617317bc6
+10074	10090	1776270024139509330	/Users/heekin/CLionProjects/Project3-CampusCompass/cmake-build-debug/_deps/catch2-subbuild/catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-patch	8ba0d74617317bc6
+10090	10104	1776270024154211713	catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-configure	91fee6d8cf72c28b
+10090	10104	1776270024154211713	/Users/heekin/CLionProjects/Project3-CampusCompass/cmake-build-debug/_deps/catch2-subbuild/catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-configure	91fee6d8cf72c28b
+10104	10120	1776270024169971974	catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-build	987aa4d63f8a9cb2
+10104	10120	1776270024169971974	/Users/heekin/CLionProjects/Project3-CampusCompass/cmake-build-debug/_deps/catch2-subbuild/catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-build	987aa4d63f8a9cb2
+10120	10135	1776270024185131673	catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-install	aa54a1df7e5b105
+10120	10135	1776270024185131673	/Users/heekin/CLionProjects/Project3-CampusCompass/cmake-build-debug/_deps/catch2-subbuild/catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-install	aa54a1df7e5b105
+10135	10150	1776270024200210001	catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-test	65d2abc2c34f2d92
+10135	10150	1776270024200210001	/Users/heekin/CLionProjects/Project3-CampusCompass/cmake-build-debug/_deps/catch2-subbuild/catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-test	65d2abc2c34f2d92
+10150	10172	1776270024222417319	CMakeFiles/catch2-populate-complete	6aba59b607e1ba28
+10150	10172	1776270024222417319	catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-done	6aba59b607e1ba28
+10150	10172	1776270024222417319	/Users/heekin/CLionProjects/Project3-CampusCompass/cmake-build-debug/_deps/catch2-subbuild/CMakeFiles/catch2-populate-complete	6aba59b607e1ba28
+10150	10172	1776270024222417319	/Users/heekin/CLionProjects/Project3-CampusCompass/cmake-build-debug/_deps/catch2-subbuild/catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-done	6aba59b607e1ba28

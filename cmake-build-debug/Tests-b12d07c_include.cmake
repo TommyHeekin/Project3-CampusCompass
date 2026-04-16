@@ -1,0 +1,5 @@
+if(EXISTS "/Users/heekin/CLionProjects/Project3-CampusCompass/cmake-build-debug/Tests-b12d07c_tests.cmake")
+  include("/Users/heekin/CLionProjects/Project3-CampusCompass/cmake-build-debug/Tests-b12d07c_tests.cmake")
+else()
+  add_test(Tests_NOT_BUILT-b12d07c Tests_NOT_BUILT-b12d07c)
+endif()

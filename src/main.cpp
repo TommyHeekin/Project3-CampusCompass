@@ -12,7 +12,6 @@ int main() {
     compass.ParseCSV("data/edges.csv", "data/classes.csv");
 
     string input;
-    smatch match;
 
     int count = 0;
     while (count == 0) {

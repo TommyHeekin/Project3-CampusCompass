@@ -2,7 +2,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <regex>
 
 using namespace std;
 
@@ -10,8 +9,9 @@ class CampusCompass {
 private:
     // Adjacency List Implementation since the graph is relatively sparse
     map<int, vector<pair<int,int>>> graph;
-    // Also use another map to keep track of which classes are at which location
-    map<int, vector<string>> locations;
+    // Also use other maps to keep track of location names and class locations
+    map<int, string> locations;
+    map<int, vector<vector<string>>> classes;
 public:
     // Think about what helper functions you will need in the algorithm
     CampusCompass(); // constructor

@@ -186,3 +186,8 @@
 12	33	1776353023390040842	/Users/heekin/CLionProjects/Project3-CampusCompass/cmake-build-debug/CMakeFiles/copy_data	6702185c93c91880
 33	1061	1776353023411062371	CMakeFiles/Main.dir/src/main.cpp.o	51e6cb101f7ac1ff
 1061	1262	1776353024438667882	Main	90114ce7c8795b6a
+28	56	1776360835417552336	CMakeFiles/copy_data	6702185c93c91880
+28	56	1776360835417552336	/Users/heekin/CLionProjects/Project3-CampusCompass/cmake-build-debug/CMakeFiles/copy_data	6702185c93c91880
+56	1307	1776360835445831425	CMakeFiles/Main.dir/src/main.cpp.o	51e6cb101f7ac1ff
+57	2215	1776360835446334860	CMakeFiles/Main.dir/src/CampusCompass.cpp.o	633139fb9acfa88
+2215	2435	1776360837604198776	Main	90114ce7c8795b6a

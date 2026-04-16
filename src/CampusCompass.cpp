@@ -2,6 +2,7 @@
 
 #include <string>
 #include <sstream>
+#include <fstream>
 #include <vector>
 #include <regex>
 
@@ -12,9 +13,9 @@ regex classcodePattern("(^[A-Z]{3}\\d{4}$)");
 regex numberOfInputs = regex("^[0-9]+$");
 regex insertCommand = regex("(^insert\\s)\"([A-Za-z ]+)\"\\s([0-9]{8})\\s([0-9]+)\\s([0-9]+)\\s(.*)");
 regex removeCommand = regex("(^remove\\s)([0-9]{8})$");
-regex dropClassCommand = regex("(^dropClass\\s)([0-9]{8})\\s([A-Z]{3})([0-9]{4})$");
-regex replaceClassCommand = regex("(^replaceClass\\s)([0-9]{8})\\s([A-Z]{3})([0-9]{4})\\s([A-Z]{3})([0-9]{4})$");
-regex removeClassCommand = regex("(^removeClass\\s)([A-Z]{3})([0-9]{4})$");
+regex dropClassCommand = regex("(^dropClass\\s)([0-9]{8})\\s([A-Z]{3}[0-9]{4})$");
+regex replaceClassCommand = regex("(^replaceClass\\s)([0-9]{8})\\s([A-Z]{3}[0-9]{4})\\s([A-Z]{3}[0-9]{4})$");
+regex removeClassCommand = regex("(^removeClass\\s)([A-Z]{3}[0-9]{4})$");
 regex toggleClosureCommand = regex("(^toggleEdgesClosure\\s)([0-9]+)\\s(.*)");
 regex checkStatusCommand = regex("(^checkEdgeStatus\\s)([0-9]+)\\s([0-9]+)$");
 regex isConnectedCommand = regex("(^isConnected\\s)([0-9]+)\\s([0-9]+)$");
@@ -27,10 +28,67 @@ CampusCompass::CampusCompass() {
 }
 
 bool CampusCompass::ParseCSV(const string &edges_filepath, const string &classes_filepath) {
-    // return boolean based on whether parsing was successful or not
-    return false;
+    // First parse edges.csv
+    ifstream file(edges_filepath);
+    if (!file.is_open()) return false;
+    string line;
+    getline(file, line);
+    while (getline(file, line)) {
+        // Read data from a given line of the csv file
+        if (line.empty()) continue;
+        stringstream ss(line);
+        vector<string> data;
+        string str;
+        while (getline(ss, str, ',')) {
+            data.push_back(str);
+        }
+        if (data.size() != 5) continue;
+
+        // Parse the ids, names, and weight from the line
+        int locationID1 = stoi(data[0]);
+        int locationID2 = stoi(data[1]);
+        string name1 = data[2];
+        string name2 = data[3];
+        int time = stoi(data[4]);
+
+        // Add information to maps
+        if (locations.find(locationID1) == locations.end()) {
+            locations[locationID1] = name1;
+        }
+        if (locations.find(locationID2) == locations.end()) {
+            locations[locationID2] = name2;
+        }
+
+        graph[locationID1].push_back({locationID2, time});
+        graph[locationID2].push_back({locationID1, time});
+    }
+
+    // Then parse classes.csv
+    ifstream file2(classes_filepath);
+    if (!file2.is_open()) return false;
+    getline(file2, line);
+    while (getline(file2, line)) {
+        if (line.empty()) continue;
+        stringstream ss(line);
+        vector<string> data;
+        string str;
+        while (getline(ss, str, ',')) {
+            data.push_back(str);
+        }
+        if (data.size() != 4) continue;
+        string classcode = data[0];
+        int locationID = stoi(data[1]);
+        string startTime = data[2];
+        string endTime = data[3];
+
+        // Add information to classes map
+        classes[locationID].push_back({classcode, startTime, endTime});
+    }
+
+    return true;
 }
 
+// Parses the number of commands that will follow in the terminal
 int CampusCompass::ParseNumInputs(const string &input) {
     if (regex_match(input, match, numberOfInputs)) {
         return stoi(match[0]);
@@ -38,7 +96,7 @@ int CampusCompass::ParseNumInputs(const string &input) {
     return 0;
 }
 
-
+// Parses the commands from user input
 bool CampusCompass::ParseCommand(const string &input) {
     // Case 1: Insert Command
     if (regex_match(input, match, insertCommand)) {
@@ -74,6 +132,7 @@ bool CampusCompass::ParseCommand(const string &input) {
         return true;
     }
 
+    // To Do: Validate class codes
     // Case 3: Drop Class Command
     if (regex_match(input, match, dropClassCommand)) {
         int student_id = stoi(match[2]);
@@ -105,6 +164,7 @@ bool CampusCompass::ParseCommand(const string &input) {
         vector<int> locationIDs;
         stringstream ss(locationIDString);
         string id;
+        // Split locations IDs
         while (ss >> id) {
             locationIDs.push_back(stoi(id));
         }

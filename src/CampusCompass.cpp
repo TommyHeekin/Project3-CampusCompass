@@ -7,6 +7,8 @@
 #include <fstream>
 #include <vector>
 #include <regex>
+#include <queue>
+#include <unordered_set>
 
 using namespace std;
 
@@ -35,6 +37,7 @@ bool CampusCompass::ParseCSV(const string &edges_filepath, const string &classes
     if (!file.is_open()) return false;
     string line;
     getline(file, line);
+    bool edgeOpen = true;
     while (getline(file, line)) {
         // Read data from a given line of the csv file
         if (line.empty()) continue;
@@ -61,8 +64,8 @@ bool CampusCompass::ParseCSV(const string &edges_filepath, const string &classes
             locations[locationID2] = name2;
         }
 
-        graph[locationID1].push_back({locationID2, time});
-        graph[locationID2].push_back({locationID1, time});
+        graph[locationID1].push_back({locationID2, time, edgeOpen});
+        graph[locationID2].push_back({locationID1, time, edgeOpen});
     }
 
     // Then parse classes.csv
@@ -83,7 +86,7 @@ bool CampusCompass::ParseCSV(const string &edges_filepath, const string &classes
         string startTime = data[2];
         string endTime = data[3];
 
-        classes[locationID].push_back({classcode, startTime, endTime});
+        classes[classcode] = {locationID, startTime, endTime};
         valid_classcodes.insert(classcode);
     }
 
@@ -154,18 +157,18 @@ bool CampusCompass::ParseCommand(const string &input) {
         int student_id = stoi(match[2]);
         string classcode1 = match[3];
         string classcode2 = match[4];
-        if (!replaceClass(student_id, classcode1, classcode2)) {
-            cout << "unsuccessful" << endl;
-        }
+        if (replaceClass(student_id, classcode1, classcode2)) {
+            cout << "successful" << endl;
+        } else cout << "unsuccessful" << endl;
         return true;
     }
 
     // Case 5: Remove Class Command
     if (regex_match(input, match, removeClassCommand)) {
         string classcode = match[2];
-        if (removeClass(classcode)) {
-            cout << "successful" << endl;
-        } else cout << "unsuccessful" << endl;
+        if (!removeClass(classcode)) {
+            cout << "unsuccessful" << endl;
+        }
         return true;
     }
 
@@ -183,7 +186,8 @@ bool CampusCompass::ParseCommand(const string &input) {
         if (locationIDs.size() != N) {
             return false;
         }
-        toggleEdgeClosure(N, locationIDs);
+        toggleEdgeClosure(locationIDs);
+        cout << "successful" << endl;
         return true;
     }
 
@@ -199,7 +203,9 @@ bool CampusCompass::ParseCommand(const string &input) {
     if (regex_match(input, match, isConnectedCommand)) {
         int locationID1 = stoi(match[2]);
         int locationID2 = stoi(match[3]);
-        isConnected(locationID1, locationID2);
+        if (isConnected(locationID1, locationID2)) {
+            cout << "successful" << endl;
+        } else cout << "unsuccessful" << endl;
         return true;
     }
 
@@ -341,20 +347,127 @@ bool CampusCompass::removeClass(const string& classcode) {
     return true;
 }
 
-bool CampusCompass::toggleEdgeClosure(int N, vector<int> location_ids) {
-    return false;
+// Toggle the given edges open or closed
+bool CampusCompass::toggleEdgeClosure(vector<int> location_ids) {
+    for (int i = 0; i < location_ids.size(); i += 2) {
+        int id1 = location_ids[i];
+        int id2 = location_ids[i + 1];
+
+        // Toggle edgeOpen variable for edge between two ids
+        for (auto& edge : graph[id1]) {
+            if (get<0>(edge) == id2) {
+                get<2>(edge) = !get<2>(edge);
+                break;
+            }
+        }
+
+        // Also toggle edge in other direction
+        for (auto& edge : graph[id2]) {
+            if (get<0>(edge) == id1) {
+                get<2>(edge) = !get<2>(edge);
+                break;
+            }
+        }
+    }
+    return true;
 }
 
-bool CampusCompass::checkEdgeStatus(int location_id_X, int location_id_Y) {
-    return false;
+void CampusCompass::checkEdgeStatus(int location_id_X, int location_id_Y) {
+    // Check if edge is connected and output to terminal accordingly
+    for (auto& edge : graph[location_id_X]) {
+        if (get<0>(edge) == location_id_Y) {
+            if (get<2>(edge)) cout << "open" << endl;
+            else cout << "closed" << endl;
+            return;
+        }
+    }
+    cout << "DNE" << endl;
 }
 
 bool CampusCompass::isConnected(int location_id_1, int location_id_2) {
+    // Finding if the two locations are connected using BFS
+    unordered_set<int> visited;
+    queue<int> vertex_queue;
+    vertex_queue.push(location_id_1);
+
+    //Main loop
+    while (!vertex_queue.empty()) {
+        int curr = vertex_queue.front();
+        vertex_queue.pop();
+        // Return true if location 2 is reached
+        if (curr == location_id_2) {
+            return true;
+        }
+
+        // Otherwise, add all neighbors to the queue
+        for (const auto& edge : graph[curr]) {
+            int neighbor = get<0>(edge);
+            bool edgeOpen = get<2>(edge);
+
+            // Add to queue only if edge is currently open
+            if (edgeOpen && visited.find(neighbor) == visited.end()) {
+                visited.insert(neighbor);
+                vertex_queue.push(neighbor);
+            }
+        }
+    }
     return false;
 }
 
 void CampusCompass::printShortestEdges(int id) {
+    string studentName = get<0>(students[id]);
+    int residenceID = get<1>(students[id]);
+    vector<string> classcodes = get<2>(students[id]);
 
+    // Use Djikstra's Algorithm to find the shortest path
+    unordered_map<int, int> distance;
+    // Start by setting distance to infinity for all nodes
+    for (const auto& [key,_] : graph) {
+        distance[key] = INT_MAX;
+    }
+    // Set distance for starting node to zero
+    distance[residenceID] = 0;
+
+    // Initialize priority queue for main loop
+    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<>> djQueue;
+    djQueue.push({0, residenceID});
+
+    // Main loop
+    while (!djQueue.empty()) {
+        int currDistance = djQueue.top().first;
+        int currID = djQueue.top().second;
+        djQueue.pop();
+
+        // If distance to current node is greater, skip
+        if (currDistance > distance[currID]) continue;
+
+        // Otherwise update
+        for (const auto& edge : graph[currID]) {
+            int neighbor = get<0>(edge);
+            int weight = get<1>(edge);
+            bool edgeOpen = get<2>(edge);
+
+            // Skip if edge is not open
+            if (!edgeOpen) continue;
+
+            // Otherwise update with new distance
+            int newDistance = currDistance + weight;
+            if (newDistance < distance[neighbor]) {
+                distance[neighbor] = newDistance;
+                djQueue.push({newDistance, neighbor});
+            }
+        }
+    }
+
+    // Print results to terminal
+    // Classes are stored in a sorted set
+    cout << "Time for Shortest Edges: " << studentName << endl;
+    for (const string& classcode : valid_classcodes) {
+        int location = get<0>(classes[classcode]);
+        if (distance[location] == INT_MAX) {
+            cout << classcode << ": -1" << endl;
+        } else cout << classcode << ": " << distance[location] << endl;
+    }
 }
 
 void CampusCompass::printStudentZone(int id) {

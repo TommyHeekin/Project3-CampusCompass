@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <unordered_set>
+#include <set>
 #include <map>
 
 using namespace std;
@@ -9,16 +9,16 @@ using namespace std;
 class CampusCompass {
 private:
     // Adjacency List Implementation since the graph is relatively sparse
-    map<int, vector<pair<int,int>>> graph;
+    map<int, vector<tuple<int,int,bool>>> graph;
     // Also use other maps to keep track of students and locations
     map<int, tuple<string, int, vector<string>>> students;
     map<int, string> locations;
 
-    // Vector to keep track of valid classcodes
-    unordered_set<string> valid_classcodes;
+    // Set to keep track of valid classcodes
+    set<string> valid_classcodes;
 
     // For extra credit
-    map<int, vector<vector<string>>> classes;
+    map<string, tuple<int, string, string>> classes;
 public:
     // Think about what helper functions you will need in the algorithm
     CampusCompass(); // constructor
@@ -30,8 +30,8 @@ public:
     bool dropClass(int student_id, const string& classcode);
     bool replaceClass(int student_id, const string& classcode_1, const string& classcode_2);
     bool removeClass(const string& classcode);
-    bool toggleEdgeClosure(int N, vector<int> location_ids);
-    bool checkEdgeStatus(int location_id_X, int location_id_Y);
+    bool toggleEdgeClosure(vector<int> location_ids);
+    void checkEdgeStatus(int location_id_X, int location_id_Y);
     bool isConnected(int location_id_1, int location_id_2);
     void printShortestEdges(int id);
     void printStudentZone(int id);

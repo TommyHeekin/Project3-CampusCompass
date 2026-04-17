@@ -1,6 +1,8 @@
 #include "CampusCompass.h"
 
 #include <string>
+#include <iostream>
+#include <algorithm>
 #include <sstream>
 #include <fstream>
 #include <vector>
@@ -23,10 +25,10 @@ regex printShortestCommand = regex("(^printShortestEdges\\s)([0-9]{8})$");
 regex printStudentCommand = regex("(^printStudentZone\\s)([0-9]{8})$");
 regex verifyScheduleCommand = regex("(^verifySchedule\\s)([0-9]{8})$");
 
-CampusCompass::CampusCompass() {
-    // initialize your object
-}
+// Constructor
+CampusCompass::CampusCompass() = default;
 
+// Parse data from CSV files
 bool CampusCompass::ParseCSV(const string &edges_filepath, const string &classes_filepath) {
     // First parse edges.csv
     ifstream file(edges_filepath);
@@ -81,8 +83,8 @@ bool CampusCompass::ParseCSV(const string &edges_filepath, const string &classes
         string startTime = data[2];
         string endTime = data[3];
 
-        // Add information to classes map
         classes[locationID].push_back({classcode, startTime, endTime});
+        valid_classcodes.insert(classcode);
     }
 
     return true;
@@ -121,14 +123,18 @@ bool CampusCompass::ParseCommand(const string &input) {
             return false;
         }
 
-        insert(student_name, student_id, residence_id, N, classcodes);
+        if (insert(student_name, student_id, residence_id, classcodes)) {
+            cout << "successful" << endl;
+        } else cout << "unsuccessful" << endl;
         return true;
     }
 
     // Case 2: Remove Command
     if (regex_match(input, match, removeCommand)) {
         int student_id = stoi(match[2]);
-        remove(student_id);
+        if (remove(student_id)) {
+            cout << "successful" << endl;
+        } else cout << "unsuccessful" << endl;
         return true;
     }
 
@@ -137,7 +143,9 @@ bool CampusCompass::ParseCommand(const string &input) {
     if (regex_match(input, match, dropClassCommand)) {
         int student_id = stoi(match[2]);
         string classcode = match[3];
-        dropClass(student_id, classcode);
+        if (dropClass(student_id, classcode)) {
+            cout << "successful" << endl;
+        } else cout << "unsuccessful" << endl;
         return true;
     }
 
@@ -146,14 +154,18 @@ bool CampusCompass::ParseCommand(const string &input) {
         int student_id = stoi(match[2]);
         string classcode1 = match[3];
         string classcode2 = match[4];
-        replaceClass(student_id, classcode1, classcode2);
+        if (!replaceClass(student_id, classcode1, classcode2)) {
+            cout << "unsuccessful" << endl;
+        }
         return true;
     }
 
     // Case 5: Remove Class Command
     if (regex_match(input, match, removeClassCommand)) {
         string classcode = match[2];
-        removeClass(classcode);
+        if (removeClass(classcode)) {
+            cout << "successful" << endl;
+        } else cout << "unsuccessful" << endl;
         return true;
     }
 
@@ -215,24 +227,118 @@ bool CampusCompass::ParseCommand(const string &input) {
     return false;
 }
 
-bool CampusCompass::insert(const string &student_name, int student_id, int residence_location_id, int N, vector<string> classcodes) {
-    return false;
+// Insert a student and add them to the specified classes
+bool CampusCompass::insert(const string &student_name, int student_id, int residence_location_id, vector<string> classcodes) {
+    // Insertion fails if student id already exists
+    if (students.find(student_id) != students.end()) {
+        return false;
+    }
+
+    // Check if all classcodes are valid
+    for (const string& classcode : classcodes) {
+        if (valid_classcodes.find(classcode) == valid_classcodes.end()) {
+            return false;
+        }
+    }
+
+    // Otherwise add student
+    students[student_id] = {student_name, residence_location_id, classcodes};
+
+    return true;
 }
 
+// Remove a student from all classes
 bool CampusCompass::remove(int student_id) {
-    return false;
+    // If student id doesn't exist, remove fails
+    if (students.find(student_id) == students.end()) {
+        return false;
+    }
+    // Remove student from map
+    students.erase(student_id);
+
+    return true;
 }
 
-bool CampusCompass::dropClass(int student_id, string classcode) {
-    return false;
+// Remove a given classcode for a student
+bool CampusCompass::dropClass(int student_id, const string& classcode) {
+    // Fails if the student id does not exist
+    if (students.find(student_id) == students.end()) {
+        return false;
+    }
+
+    // Also if student does not have the given classcode, drop fails
+    bool class_found = false;
+    vector<string>& studentClasses = get<2>(students[student_id]);
+    for (string studentClass : studentClasses) {
+        if (studentClass == classcode) {
+            class_found = true;
+        }
+    }
+    if (!class_found) {
+        return false;
+    }
+
+    // Remove classcode from student
+    studentClasses.erase(std::remove(studentClasses.begin(), studentClasses.end(), classcode), studentClasses.end());
+    if (studentClasses.empty()) {
+        students.erase(student_id);
+    }
+    return true;
 }
 
-bool CampusCompass::replaceClass(int student_id, string classcode1, string classcode2) {
-    return false;
+// Replaces a class with another class in the student's schedule
+bool CampusCompass::replaceClass(int student_id, const string& classcode1, const string& classcode2) {
+    // Check if classcode2 is valid
+    if (valid_classcodes.find(classcode2) == valid_classcodes.end()) {
+        return false;
+    }
+
+    // Make sure replace doesnt cause duplicate classes
+    auto& studentClasses = get<2>(students[student_id]);
+    if (find(studentClasses.begin(), studentClasses.end(), classcode2) != studentClasses.end()) {
+        return false;
+    }
+
+    // Call dropclass function to drop classcode 1
+    // If dropclass fails, return false
+    if (!dropClass(student_id, classcode1)) {
+        return false;
+    }
+
+    // If so, add student to class
+    get<2>(students[student_id]).push_back(classcode2);
+
+    return true;
 }
 
-bool CampusCompass::removeClass(string classcode) {
-    return false;
+// Removes a classcode from the schedule for all students
+bool CampusCompass::removeClass(const string& classcode) {
+    // Remove classcode from every student
+    int count = 0;
+    for (auto it = students.begin(); it != students.end();) {
+        auto& studentClasses = get<2>(it->second);
+
+        auto it2 = find(studentClasses.begin(), studentClasses.end(), classcode);
+        if (it2 != studentClasses.end()) {
+            studentClasses.erase(it2);
+            count++;
+        }
+
+        // If a student has no classes, delete them
+        if (studentClasses.empty()) {
+            it = students.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    // If a class isn't dropped from any students, remove fails
+    if (count == 0) {
+        return false;
+    }
+
+    cout << count << endl;
+    return true;
 }
 
 bool CampusCompass::toggleEdgeClosure(int N, vector<int> location_ids) {

@@ -21,9 +21,9 @@ int main() {
 
     for (int i = 0; i < count; i++) {
         getline(cin, input);
-        if (compass.ParseCommand(input)) {
-            cout << "successful" << endl;
-        } else cout << "unsuccessful" << endl;
+        if (!compass.ParseCommand(input)) {
+            cout << "unsuccessful" << endl;
+        }
     }
     return 0;
 }

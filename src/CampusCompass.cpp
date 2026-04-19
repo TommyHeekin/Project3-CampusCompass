@@ -9,6 +9,8 @@
 #include <regex>
 #include <queue>
 #include <unordered_set>
+#include <climits>
+#include <unordered_map>
 
 using namespace std;
 
@@ -372,6 +374,7 @@ bool CampusCompass::toggleEdgeClosure(vector<int> location_ids) {
     return true;
 }
 
+// Check if a current edge is open, closed, or does not exist
 void CampusCompass::checkEdgeStatus(int location_id_X, int location_id_Y) {
     // Check if edge is connected and output to terminal accordingly
     for (auto& edge : graph[location_id_X]) {
@@ -384,6 +387,7 @@ void CampusCompass::checkEdgeStatus(int location_id_X, int location_id_Y) {
     cout << "DNE" << endl;
 }
 
+// Check if it's possible to travel between two locations
 bool CampusCompass::isConnected(int location_id_1, int location_id_2) {
     // Finding if the two locations are connected using BFS
     unordered_set<int> visited;
@@ -414,13 +418,91 @@ bool CampusCompass::isConnected(int location_id_1, int location_id_2) {
     return false;
 }
 
+// Prints the shortest walking time from a student residence to every class
 void CampusCompass::printShortestEdges(int id) {
     string studentName = get<0>(students[id]);
     int residenceID = get<1>(students[id]);
     vector<string> classcodes = get<2>(students[id]);
 
-    // Use Djikstra's Algorithm to find the shortest path
-    unordered_map<int, int> distance;
+    // Call helper function
+    vector<unordered_map<int,int>> result = djikstrasAlgorithm(residenceID);
+
+    // Print results to terminal
+    // Classes are stored in a sorted set
+    cout << "Time for Shortest Edges: " << studentName << endl;
+    for (const string& classcode : valid_classcodes) {
+        int location = get<0>(classes[classcode]);
+        if (result[0][location] == INT_MAX) {
+            cout << classcode << ": -1" << endl;
+        } else cout << classcode << ": " << result[0][location] << endl;
+    }
+}
+
+// Creates a MST and outputs the total coast
+void CampusCompass::printStudentZone(int id) {
+    string studentName = get<0>(students[id]);
+    int residenceID = get<1>(students[id]);
+    vector<string> classcodes = get<2>(students[id]);
+
+    // Call Djikstra helper function
+    vector<unordered_map<int,int>> result = djikstrasAlgorithm(residenceID);
+
+    // Get all vertices in the shortest paths
+    unordered_set<int> vertices;
+    vertices.insert(residenceID);
+
+    for (const string& classcode : classcodes) {
+        int location = get<0>(classes[classcode]);
+        int currID = location;
+
+        while (currID != residenceID) {
+            vertices.insert(currID);
+            currID = result[1][currID];
+        }
+        vertices.insert(residenceID);
+    }
+
+    // Use Prim's algorithm to create the MST
+    int totalCost = 0;
+    unordered_set<int> visited;
+
+    // Initialize the min heap
+    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<>> primQueue;
+    primQueue.push({0, residenceID});
+
+    while (!primQueue.empty()) {
+        int currDistance = primQueue.top().first;
+        int currID = primQueue.top().second;
+        primQueue.pop();
+
+        if (visited.find(currID) != visited.end()) continue;
+
+        visited.insert(currID);
+        totalCost += currDistance;
+
+        for (const auto& edge : graph[currID]) {
+            int neighbor = get<0>(edge);
+            int distance = get<1>(edge);
+            bool edgeOpen = get<2>(edge);
+
+            if (edgeOpen && vertices.count(neighbor) && !visited.count(neighbor)) {
+                primQueue.push({distance, neighbor});
+            }
+        }
+    }
+
+    // Output total cost to terminal
+    cout << "Student Zone Cost For " << studentName << ": " << totalCost << endl;
+}
+
+bool CampusCompass::verifySchedule(int id) {
+    return false;
+}
+
+vector<unordered_map<int,int>> CampusCompass::djikstrasAlgorithm(int residenceID) {
+    unordered_map<int,int> distance;
+    unordered_map<int,int> predecessor;
+
     // Start by setting distance to infinity for all nodes
     for (const auto& [key,_] : graph) {
         distance[key] = INT_MAX;
@@ -454,26 +536,11 @@ void CampusCompass::printShortestEdges(int id) {
             int newDistance = currDistance + weight;
             if (newDistance < distance[neighbor]) {
                 distance[neighbor] = newDistance;
+                predecessor[neighbor] = currID;
                 djQueue.push({newDistance, neighbor});
             }
         }
     }
 
-    // Print results to terminal
-    // Classes are stored in a sorted set
-    cout << "Time for Shortest Edges: " << studentName << endl;
-    for (const string& classcode : valid_classcodes) {
-        int location = get<0>(classes[classcode]);
-        if (distance[location] == INT_MAX) {
-            cout << classcode << ": -1" << endl;
-        } else cout << classcode << ": " << distance[location] << endl;
-    }
-}
-
-void CampusCompass::printStudentZone(int id) {
-
-}
-
-bool CampusCompass::verifySchedule(int id) {
-    return false;
+    return {distance, predecessor};
 }

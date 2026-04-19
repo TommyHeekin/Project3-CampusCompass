@@ -3,6 +3,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <unordered_map>
 
 using namespace std;
 
@@ -36,4 +37,7 @@ public:
     void printShortestEdges(int id);
     void printStudentZone(int id);
     bool verifySchedule(int id);
+
+    // Also have helper functions for Djikstra's and Prim's Algorithms
+    vector<unordered_map<int,int>> djikstrasAlgorithm(int residenceID);
 };

@@ -25,7 +25,7 @@ regex removeClassCommand = regex("(^removeClass\\s)([A-Z]{3}[0-9]{4})$");
 regex toggleClosureCommand = regex("(^toggleEdgesClosure\\s)([0-9]+)\\s(.*)");
 regex checkStatusCommand = regex("(^checkEdgeStatus\\s)([0-9]+)\\s([0-9]+)$");
 regex isConnectedCommand = regex("(^isConnected\\s)([0-9]+)\\s([0-9]+)$");
-regex printShortestCommand = regex("(^printShortestEdges\\s)([0-9]{8})$");
+regex printShortestCommand = regex("(^printShortestEdges\\s)([0-9]{8})\\s*$");
 regex printStudentCommand = regex("(^printStudentZone\\s)([0-9]{8})$");
 regex verifyScheduleCommand = regex("(^verifySchedule\\s)([0-9]{8})$");
 
@@ -124,7 +124,7 @@ bool CampusCompass::ParseCommand(const string &input) {
             classcodes.push_back(code);
         }
 
-        if (classcodes.size() != N) {
+        if (classcodes.size() != N || classcodes.size() > 6 || classcodes.size() < 1) {
             return false;
         }
 
@@ -185,7 +185,7 @@ bool CampusCompass::ParseCommand(const string &input) {
         while (ss >> id) {
             locationIDs.push_back(stoi(id));
         }
-        if (locationIDs.size() != N) {
+        if (locationIDs.size() != (N * 2)) {
             return false;
         }
         toggleEdgeClosure(locationIDs);
@@ -296,25 +296,27 @@ bool CampusCompass::dropClass(int student_id, const string& classcode) {
 
 // Replaces a class with another class in the student's schedule
 bool CampusCompass::replaceClass(int student_id, const string& classcode1, const string& classcode2) {
+    auto& studentClasses = get<2>(students[student_id]);
+
     // Check if classcode2 is valid
     if (valid_classcodes.find(classcode2) == valid_classcodes.end()) {
         return false;
     }
 
-    // Make sure replace doesnt cause duplicate classes
-    auto& studentClasses = get<2>(students[student_id]);
+    // Make sure the student doesn't already have classcode 2
     if (find(studentClasses.begin(), studentClasses.end(), classcode2) != studentClasses.end()) {
         return false;
     }
 
-    // Call dropclass function to drop classcode 1
-    // If dropclass fails, return false
+    // Call dropClass function to drop classcode1
+    // If this function returns false, replace fails
     if (!dropClass(student_id, classcode1)) {
         return false;
     }
 
-    // If so, add student to class
-    get<2>(students[student_id]).push_back(classcode2);
+    // Now update new classes
+    auto& newClasses = get<2>(students[student_id]);
+    newClasses.push_back(classcode2);
 
     return true;
 }
@@ -423,14 +425,15 @@ void CampusCompass::printShortestEdges(int id) {
     string studentName = get<0>(students[id]);
     int residenceID = get<1>(students[id]);
     vector<string> classcodes = get<2>(students[id]);
+    sort(classcodes.begin(), classcodes.end());
 
     // Call helper function
     vector<unordered_map<int,int>> result = djikstrasAlgorithm(residenceID);
 
     // Print results to terminal
     // Classes are stored in a sorted set
-    cout << "Time for Shortest Edges: " << studentName << endl;
-    for (const string& classcode : valid_classcodes) {
+    cout << "Time For Shortest Edges: " << studentName << endl;
+    for (const string& classcode : classcodes) {
         int location = get<0>(classes[classcode]);
         if (result[0][location] == INT_MAX) {
             cout << classcode << ": -1" << endl;
@@ -496,7 +499,50 @@ void CampusCompass::printStudentZone(int id) {
 }
 
 bool CampusCompass::verifySchedule(int id) {
-    return false;
+    string studentName = get<0>(students[id]);
+    vector<string> classcodes = get<2>(students[id]);
+
+    // Function fails if student only has 1 class
+    if (classcodes.size() <= 1){
+        cout << "unsuccessful" << endl;
+        return false;
+    }
+
+    // Sort classes by start time
+    vector<pair<string,string>> temp;
+    for (const string& classcode : classcodes) {
+        string startTime = get<1>(classes[classcode]);
+        temp.push_back({startTime, classcode});
+    }
+    sort(temp.begin(), temp.end());
+    classcodes.clear();
+    for (auto& pair : temp) {
+        classcodes.push_back(pair.second);
+    }
+
+    // Verify consecutive classes, if the time gap isn't large enough return unsuccessful
+    for (int i = 0; i < classcodes.size()-1; i++) {
+        // Get current and next class
+        string class1 = classcodes[i];
+        string class2 = classcodes[i+1];
+        int id1 = get<0>(classes[class1]);
+        int id2 = get<0>(classes[class2]);
+        // Also get endTime of class1 and startTime of class using helper function
+        int endTime1 = stoi(get<2>(classes[class1]).substr(0,2)) * 60 + stoi(get<2>(classes[class1]).substr(3,2));
+        int startTime2 = stoi(get<1>(classes[class2]).substr(0,2)) * 60 + stoi(get<1>(classes[class2]).substr(3,2));
+        // Calculate gap between two times in minutes
+        int timeGap = startTime2 - endTime1;
+
+        // Use Djikstra's helper function for the first id
+        vector<unordered_map<int,int>> result = djikstrasAlgorithm(id1);
+        int travelTime = result[0][id2];
+
+        // If the result of djikstra's is less than the gap between classes, schedule is valid
+        if (travelTime != INT_MAX && travelTime <= timeGap) {
+            cout << class1 << " - " << class2 << ": successful" << endl;
+        } else cout << class1 << " - " << class2 << ": unsuccessful" << endl;
+    }
+    return true;
 }
 
 vector<unordered_map<int,int>> CampusCompass::djikstrasAlgorithm(int residenceID) {

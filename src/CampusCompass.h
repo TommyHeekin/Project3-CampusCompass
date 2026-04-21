@@ -38,6 +38,6 @@ public:
     void printStudentZone(int id);
     bool verifySchedule(int id);
 
-    // Also have helper functions for Djikstra's and Prim's Algorithms
+    // Also have helper function for Djikstra's Algorithm
     vector<unordered_map<int,int>> djikstrasAlgorithm(int residenceID);
 };

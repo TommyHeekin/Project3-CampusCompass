@@ -93,9 +93,9 @@ TEST_CASE("Insert Duplicate IDs", "[edge_case], [command_test]") {
   REQUIRE(compass.insert("Billy Bob", 29824140, 2, {"CDA3101"}) == false);
 }
 
+// Test your printShortestEdges command in a case where a student can reach a class, then edges turn off and they cannot
 TEST_CASE("Print Edges Test", "[edge_case]") {
   CampusCompass compass;
   compass.ParseCSV("data/edges.csv", "data/classes.csv");
   compass.insert("Thomas Heekin", 29824140, 4, {"PHY2048"});
-  //Still need to work on this one
 }

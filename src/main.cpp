@@ -13,12 +13,14 @@ int main() {
 
     string input;
 
+    // Get number of inputs from the user
     int count = 0;
     while (count == 0) {
         getline(cin, input);
         count = compass.ParseNumInputs(input);
     }
 
+    // Parse inputs and call respective commands
     for (int i = 0; i < count; i++) {
         getline(cin, input);
         if (!compass.ParseCommand(input)) {

@@ -124,7 +124,9 @@ bool CampusCompass::ParseCommand(const string &input) {
             classcodes.push_back(code);
         }
 
-        if (classcodes.size() != N || classcodes.size() > 6 || classcodes.size() < 1) {
+        // Fails if N is not equal to number of classcodes input
+        // Also fails if N is not between 1 and 6
+        if (classcodes.size() != N || classcodes.size() > 6 || classcodes.empty()) {
             return false;
         }
 
@@ -277,7 +279,7 @@ bool CampusCompass::dropClass(int student_id, const string& classcode) {
     // Also if student does not have the given classcode, drop fails
     bool class_found = false;
     vector<string>& studentClasses = get<2>(students[student_id]);
-    for (string studentClass : studentClasses) {
+    for (const string& studentClass : studentClasses) {
         if (studentClass == classcode) {
             class_found = true;
         }
@@ -296,6 +298,11 @@ bool CampusCompass::dropClass(int student_id, const string& classcode) {
 
 // Replaces a class with another class in the student's schedule
 bool CampusCompass::replaceClass(int student_id, const string& classcode1, const string& classcode2) {
+    // Check if student id is valid
+    if (students.find(student_id) == students.end()) {
+        return false;
+    }
+
     auto& studentClasses = get<2>(students[student_id]);
 
     // Check if classcode2 is valid
@@ -323,6 +330,11 @@ bool CampusCompass::replaceClass(int student_id, const string& classcode1, const
 
 // Removes a classcode from the schedule for all students
 bool CampusCompass::removeClass(const string& classcode) {
+    // First check if classcode is valid
+    if (valid_classcodes.find(classcode) == valid_classcodes.end()) {
+        return false;
+    }
+
     // Remove classcode from every student
     int count = 0;
     for (auto it = students.begin(); it != students.end();) {
@@ -352,7 +364,7 @@ bool CampusCompass::removeClass(const string& classcode) {
 }
 
 // Toggle the given edges open or closed
-bool CampusCompass::toggleEdgeClosure(vector<int> location_ids) {
+bool CampusCompass::toggleEdgeClosure(const vector<int>& location_ids) {
     for (int i = 0; i < location_ids.size(); i += 2) {
         int id1 = location_ids[i];
         int id2 = location_ids[i + 1];
@@ -395,6 +407,7 @@ bool CampusCompass::isConnected(int location_id_1, int location_id_2) {
     unordered_set<int> visited;
     queue<int> vertex_queue;
     vertex_queue.push(location_id_1);
+    visited.insert(location_id_1);
 
     //Main loop
     while (!vertex_queue.empty()) {
@@ -421,11 +434,14 @@ bool CampusCompass::isConnected(int location_id_1, int location_id_2) {
 }
 
 // Prints the shortest walking time from a student residence to every class
-void CampusCompass::printShortestEdges(int id) {
+vector<pair<string,int>> CampusCompass::printShortestEdges(int id) {
     string studentName = get<0>(students[id]);
     int residenceID = get<1>(students[id]);
     vector<string> classcodes = get<2>(students[id]);
     sort(classcodes.begin(), classcodes.end());
+
+    // Vector that will be returned for test.cpp
+    vector<pair<string,int>> edges;
 
     // Call helper function
     vector<unordered_map<int,int>> result = djikstrasAlgorithm(residenceID);
@@ -437,8 +453,13 @@ void CampusCompass::printShortestEdges(int id) {
         int location = get<0>(classes[classcode]);
         if (result[0][location] == INT_MAX) {
             cout << classcode << ": -1" << endl;
-        } else cout << classcode << ": " << result[0][location] << endl;
+            edges.push_back({classcode, -1});
+        } else {
+            cout << classcode << ": " << result[0][location] << endl;
+            edges.push_back({classcode, result[0][location]});
+        }
     }
+    return edges;
 }
 
 // Creates a MST and outputs the total coast
@@ -520,11 +541,13 @@ bool CampusCompass::verifySchedule(int id) {
         classcodes.push_back(pair.second);
     }
 
+    cout << "Schedule Check for " << studentName << ": " << endl;
+
     // Verify consecutive classes, if the time gap isn't large enough return unsuccessful
     for (int i = 0; i < classcodes.size()-1; i++) {
         // Get current and next class
-        string class1 = classcodes[i];
-        string class2 = classcodes[i+1];
+        const string& class1 = classcodes[i];
+        const string& class2 = classcodes[i+1];
         int id1 = get<0>(classes[class1]);
         int id2 = get<0>(classes[class2]);
         // Also get endTime of class1 and startTime of class using helper function
